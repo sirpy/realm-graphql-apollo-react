@@ -8,6 +8,11 @@ import {
   HttpLink,
   InMemoryCache,
 } from "@apollo/client";
+
+import { InvalidationPolicyCache, RenewalPolicy } from '@nerdwallet/apollo-cache-policies';
+import { AsyncStorageWrapper, persistCache } from 'apollo3-cache-persist';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Realm
 import * as Realm from "realm-web";
 // Check out app.js for examples of how to run GraphQL operations
@@ -23,7 +28,7 @@ import App from "./App";
 // 5. Deploy your changes
 //
 // Once your app is set up, replace the value of APP_ID with your App ID
-export const APP_ID = "<Your App ID>";
+export const APP_ID = "wallet_prod-obclo";
 
 // Connect to your MongoDB Realm app
 const app = new Realm.App(APP_ID);
@@ -44,8 +49,27 @@ async function getValidAccessToken() {
   return app.currentUser.accessToken;
 }
 
+const cache = new InvalidationPolicyCache({
+  invalidationPolicies: {
+    timeToLive: 3600 * 1000, // 24hr TTL on all types in the cache
+    renewalPolicy: RenewalPolicy.AccessAndWrite,    
+    types: {
+      "User_profile": {
+        timeToLive: 3600 * 1000 * 24 // 1 day
+      }
+    }
+  }
+});
+// const cache = new InMemoryCache({})
+
+persistCache({
+  cache,
+  storage: new AsyncStorageWrapper(AsyncStorage),
+});
+
 // Configure the ApolloClient to connect to your app's GraphQL endpoint
 const client = new ApolloClient({
+  cache,
   link: new HttpLink({
     uri: `https://realm.mongodb.com/api/client/v2.0/app/${APP_ID}/graphql`,
     // We define a custom fetch handler for the Apollo client that lets us authenticate GraphQL requests.
@@ -56,8 +80,15 @@ const client = new ApolloClient({
       options.headers.Authorization = `Bearer ${accessToken}`;
       return fetch(uri, options);
     },
+    defaultOptions: {
+      watchQuery: {
+        fetchPolicy: 'no-cache',
+      },
+      query: {
+        fetchPolicy: 'no-cache'
+      }      
+    }, 
   }),
-  cache: new InMemoryCache(),
 });
 
 // Wrap your app with an ApolloProvider that provides the client

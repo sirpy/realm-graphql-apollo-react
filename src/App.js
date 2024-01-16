@@ -2,15 +2,16 @@ import "./styles.css";
 import * as React from "react";
 import { APP_ID } from "./index";
 import { useQuery, useMutation } from "@apollo/client";
-import { FIND_MOVIE, UPDATE_MOVIE } from "./graphql-operations";
+import { FIND_PROFILES, UPDATE_MOVIE } from "./graphql-operations";
 
 export default function App(props) {
-  const [searchText, setSearchText] = React.useState("The Matrix Reloaded");
-  const { loading, data } = useQuery(FIND_MOVIE, {
-    variables: { query: { title: searchText } }
+  const [searchText, setSearchText] = React.useState("0x5ccc6fca8d5e4b038185a092c1bc9379c096f5fc104c402f32fb7793d92206bc");
+  const { loading, data } = useQuery(FIND_PROFILES, {
+    variables: { query: { index: {walletAddress: {hash_in: [searchText, "0xf07ba019151e670cca325b154a2e8ee6b8b9ca817b5af2f28ef92e3da162cd3b"]}} } }
   });
+  console.log({loading, data})
 
-  const movie = data ? data.movie : null;
+  const movie = data ? data.user_profiles : null;
   const [updateMovie, { loading: updating }] = useMutation(UPDATE_MOVIE);
   const [newTitleText, setNewTitleText] = React.useState("Silly New Title");
 

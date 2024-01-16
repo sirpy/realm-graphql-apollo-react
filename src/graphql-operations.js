@@ -1,14 +1,11 @@
 import gql from "graphql-tag";
 
-export const FIND_MOVIE = gql`
-  query FindMovie($query: MovieQueryInput!) {
-    movie(query: $query) {
-      _id
-      title
-      year
-      runtime
-      rated
-      poster
+export const FIND_PROFILES = gql`
+  query FindProfiles($query: User_profileQueryInput!) {
+    user_profiles(query: $query) {
+      fullName {
+        display
+      }
     }
   }
 `;
